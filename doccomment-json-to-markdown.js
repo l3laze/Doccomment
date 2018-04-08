@@ -13,7 +13,7 @@ async function generate (json, options) {
     sectionSeparator: '## ------------',
     header: () => `# **\`${options.name || pj.name}\`** API Documentation<br />Version \`${options.version || pj.version}\`\n${builder.sectionSeparator}`,
     toc: () => {
-      const tic = [ `### **[Table of Contents]()**` ]
+      const tic = [ `### **[Table of Contents](${options.name.toLowerCase()}-toc)**` ]
 
       for (let root of Object.keys(json.tree)) {
         for (let branch in json.tree[ root ]) {
