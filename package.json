@@ -1,0 +1,21 @@
+{
+  "name": "doccomment",
+  "version": "0.0.2-rc2",
+  "main": "doccomment.js",
+  "author": "Tom <l3l_aze@yahoo.com>",
+  "copyright": "Copyright © 2017 ${author}",
+  "description": "Library to help read/modify/write the Steam Client's configuration.",
+  "repository": {
+    "type": "git",
+    "url": "git+github.com/l3laze/Doccomment.git"
+  },
+  "dependencies": {
+    "cli": "^1.0.1"
+  },
+  "devDependencies": {
+    "standard": "^11.0.1"
+  },
+  "scripts": {
+    "lint": "yarn standard"
+  }
+}
