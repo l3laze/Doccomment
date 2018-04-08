@@ -18,23 +18,23 @@ async function generate (json, options) {
       for (let root of Object.keys(json.tree)) {
         for (let branch in json.tree[ root ]) {
           if (branch === 'module') {
-            tic.push(`* \`Module\` [${json.tree[ root ][ branch ]}]()`)
+            tic.push(`* \`Module\` [${json.tree[ root ][ branch ]}](#module-${json.tree[ root ].module.toLowerCase()})`)
           }
 
           if (/methods|properties/.test(branch)) {
             if (branch === 'properties') {
-              tic.push(` * [Properties]()`)
+              tic.push(` * [Properties](#module-${json.tree[ root ].module.toLowerCase()}-properties)`)
             } else if (branch === 'methods') {
-              tic.push(` * [Methods]()`)
+              tic.push(` * [Methods](#module-${json.tree[ root ].module.toLowerCase()}-methods)`)
             }
 
             for (let leaf of json.tree[ root ][ branch ]) {
               if (branch === 'properties') {
-                tic.push(`   * [${leaf.name}]()`)
+                tic.push(`   * [${leaf.name}](#${json.tree[ root ].module.toLowerCase()}.${leaf.name.toLowerCase()})`)
               } else if (branch === 'methods') {
                 tic.push(`   * ${leaf.async ? '`async` ' : ''}[${leaf.name + (leaf.arguments ? ' (' + leaf.arguments.map((i) => {
                   return i.name + (i.default ? ` = ${i.default}` : '')
-                }).join(', ') + ')' : '')}]()`)
+                }).join(', ') + ')' : '')}](#${json.tree[ root ].module.toLowerCase()}.${leaf.name.toLowerCase()})`)
               }
             }
           }
@@ -50,28 +50,28 @@ async function generate (json, options) {
         for (let branch in json.tree[ root ]) {
           if (branch === 'module') {
             contents.push(builder.articleSeparator)
-            contents.push(`# Module [${json.tree[ root ][ branch ]}]()`)
+            contents.push(`# Module [${json.tree[ root ][ branch ]}](module-${json.tree[ root ].module.toLowerCase()})`)
             contents.push(builder.sectionSeparator)
           }
 
           if (/methods|properties/.test(branch)) {
             if (branch === 'properties') {
-              contents.push(`## [Properties]()`)
+              contents.push(`## [Properties](module-${json.tree[ root ].module.toLowerCase()}-properties)`)
               contents.push(builder.sectionSeparator)
               contents.push(`| Name | Type | Description |`)
               contents.push(`| --- | --- | --- |`)
             } else if (branch === 'methods') {
-              contents.push(`## [Methods]()`)
+              contents.push(`## [Methods](module-${json.tree[ root ].module.toLowerCase()}-methods)`)
               contents.push(builder.sectionSeparator)
             }
 
             for (let leaf in json.tree[ root ][ branch ]) {
               if (branch === 'properties') {
-                contents.push(`| [${json.tree[ root ][ branch ][ leaf ].name}]() | ${json.tree[ root ][ branch ][ leaf ].type} | ${json.tree[ root ][ branch ][ leaf ].description}`)
+                contents.push(`| [${json.tree[ root ][ branch ][ leaf ].name}](${json.tree[ root ].module.toLowerCase()}.${json.tree[ root ][ branch ][ leaf ].name.toLowerCase()}) | ${json.tree[ root ][ branch ][ leaf ].type} | ${json.tree[ root ][ branch ].description}`)
               } else if (branch === 'methods') {
                 contents.push(`#### ${json.tree[ root ][ branch ][ leaf ].async ? '`async` ' : ''}[${json.tree[ root ][ branch ][ leaf ].name + (json.tree[ root ][ branch ][ leaf ].arguments ? ' (' + json.tree[ root ][ branch ][ leaf ].arguments.map((i) => {
                   return i.name + (i.default ? ` = ${i.default}` : '')
-                }).join(', ') + ')' : '')}]()\n${leaf.description}\n` +
+                }).join(', ') + ')' : '')}](${json.tree[ root ].module.toLowerCase()}.${json.tree[ root ][ branch ][ leaf ].name.toLowerCase()})\n${json.tree[ root ][ branch ][ leaf ].description}\n` +
                 (json.tree[ root ][ branch ][ leaf ].arguments ? '> **Arguments**\n\n' + json.tree[ root ][ branch ][ leaf ].arguments.map((i) => {
                   return `* \`${i.name}\`` + (i.default ? ` = ${i.default}` : '') + ` *is a* \`${i.type}\` - ${i.description}\n\n`
                 }).join('\n') + '\n' : '') +
