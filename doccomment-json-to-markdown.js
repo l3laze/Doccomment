@@ -11,9 +11,9 @@ async function generate (json, options) {
   const builder = {
     articleSeparator: '----',
     sectionSeparator: '## ------------',
-    header: () => `# **\`${options.name || pj.name}\`** API Documentation<br />Version \`${options.version || pj.version}\`\n${builder.sectionSeparator}`,
+    header: () => `# **\`${options.name || pj.name}\`** API Documentation<br />Version \`${options.version || pj.version}\`\n\n${builder.sectionSeparator}`,
     toc: () => {
-      const tic = [ `### **[Table of Contents](${options.name.toLowerCase()}-toc)**` ]
+      const tic = [ '### **Table of Contents**' ]
 
       for (let root of Object.keys(json.tree)) {
         for (let branch in json.tree[ root ]) {
@@ -30,11 +30,11 @@ async function generate (json, options) {
 
             for (let leaf of json.tree[ root ][ branch ]) {
               if (branch === 'properties') {
-                tic.push(`   * [${leaf.name}](#${json.tree[ root ].module.toLowerCase()}.${leaf.name.toLowerCase()})`)
+                tic.push(`   * [${leaf.name}](#${json.tree[ root ].module.toLowerCase()}-${leaf.name.toLowerCase()})`)
               } else if (branch === 'methods') {
                 tic.push(`   * ${leaf.async ? '`async` ' : ''}[${leaf.name + (leaf.arguments ? ' (' + leaf.arguments.map((i) => {
                   return i.name + (i.default ? ` = ${i.default}` : '')
-                }).join(', ') + ')' : '')}](#${json.tree[ root ].module.toLowerCase()}.${leaf.name.toLowerCase()})`)
+                }).join(', ') + ')' : '')}](#${json.tree[ root ].module.toLowerCase()}-${leaf.name.toLowerCase()})`)
               }
             }
           }
@@ -49,38 +49,43 @@ async function generate (json, options) {
       for (let root of Object.keys(json.tree)) {
         for (let branch in json.tree[ root ]) {
           if (branch === 'module') {
-            contents.push(builder.articleSeparator)
-            contents.push(`# Module [${json.tree[ root ][ branch ]}](module-${json.tree[ root ].module.toLowerCase()})`)
+            contents.push(builder.articleSeparator, '\n')
+            contents.push(`<a name='module-${json.tree[ root ].module.toLowerCase()}'></a>`)
+            contents.push(`# Module [${json.tree[ root ][ branch ]}](module-${json.tree[ root ].module.toLowerCase()})\n`)
             contents.push(builder.sectionSeparator)
           }
 
           if (/methods|properties/.test(branch)) {
             if (branch === 'properties') {
-              contents.push(`## [Properties](module-${json.tree[ root ].module.toLowerCase()}-properties)`)
-              contents.push(builder.sectionSeparator)
-              contents.push(`| Name | Type | Description |`)
-              contents.push(`| --- | --- | --- |`)
+              contents.push(`\n<a name='module-${json.tree[ root ].module.toLowerCase()}-properties'></a>`)
+              contents.push('## Properties\n')
+              contents.push(builder.sectionSeparator, '\n')
+              contents.push('| Name | Type | Description |')
+              contents.push('| --- | --- | --- |')
             } else if (branch === 'methods') {
-              contents.push(`## [Methods](module-${json.tree[ root ].module.toLowerCase()}-methods)`)
+              contents.push(`\n<a name='module-${json.tree[ root ].module.toLowerCase()}-methods'></a>`)
+              contents.push('## Methods\n')
               contents.push(builder.sectionSeparator)
             }
 
             for (let leaf in json.tree[ root ][ branch ]) {
               if (branch === 'properties') {
-                contents.push(`| [${json.tree[ root ][ branch ][ leaf ].name}](${json.tree[ root ].module.toLowerCase()}.${json.tree[ root ][ branch ][ leaf ].name.toLowerCase()}) | ${json.tree[ root ][ branch ][ leaf ].type} | ${json.tree[ root ][ branch ].description}`)
+                contents.push(`| <a name='${json.tree[ root ].module.toLowerCase()}-${json.tree[ root ][ branch ][ leaf ].name.toLowerCase()}'></a> ${json.tree[ root ][ branch ][ leaf ].name} | ${json.tree[ root ][ branch ][ leaf ].type} | ${json.tree[ root ][ branch ][ leaf ].description}`)
               } else if (branch === 'methods') {
-                contents.push(`#### ${json.tree[ root ][ branch ][ leaf ].async ? '`async` ' : ''}[${json.tree[ root ][ branch ][ leaf ].name + (json.tree[ root ][ branch ][ leaf ].arguments ? ' (' + json.tree[ root ][ branch ][ leaf ].arguments.map((i) => {
+                contents.push(`\n<a name='${json.tree[ root ].module.toLowerCase()}-${json.tree[ root ][ branch ][ leaf ].name.toLowerCase()}'></a>`)
+                contents.push(`#### ${json.tree[ root ][ branch ][ leaf ].async ? '`async` ' : ''} ${json.tree[ root ][ branch ][ leaf ].name +
+                (json.tree[ root ][ branch ][ leaf ].arguments ? ' (' + json.tree[ root ][ branch ][ leaf ].arguments.map((i) => {
                   return i.name + (i.default ? ` = ${i.default}` : '')
-                }).join(', ') + ')' : '')}](${json.tree[ root ].module.toLowerCase()}.${json.tree[ root ][ branch ][ leaf ].name.toLowerCase()})\n${json.tree[ root ][ branch ][ leaf ].description}\n` +
+                }).join(', ') + ')' : '')} \n\n${json.tree[ root ][ branch ][ leaf ].description}\n` +
                 (json.tree[ root ][ branch ][ leaf ].arguments ? '> **Arguments**\n\n' + json.tree[ root ][ branch ][ leaf ].arguments.map((i) => {
                   return `* \`${i.name}\`` + (i.default ? ` = ${i.default}` : '') + ` *is a* \`${i.type}\` - ${i.description}\n\n`
-                }).join('\n') + '\n' : '') +
+                }).join('\n') : '') +
                 (json.tree[ root ][ branch ][ leaf ].returns ? '\n> **Returns**\n\n' + json.tree[ root ][ branch ][ leaf ].returns.map((i) => {
                   return `* \`${i.type}\` - ${i.description}\n\n`
-                }).join('\n') + '\n' : '') +
+                }).join('\n') : '') +
                 (json.tree[ root ][ branch ][ leaf ].throws ? '\n> **Throws**\n\n' + json.tree[ root ][ branch ][ leaf ].throws.map((i) => {
                   return `* \`${i.type}\` - ${i.description}\n\n`
-                }).join('\n') + '\n' : ''))
+                }).join('\n') : ''))
 
                 contents.push(builder.sectionSeparator)
               }
@@ -102,16 +107,15 @@ async function generate (json, options) {
 
       return contents.join('\n')
     },
-    footer: () => `${builder.articleSeparator}\n## Generated by [Doccomment.js]()...so, that's great and stuff.`
+    footer: () => `${builder.articleSeparator}\n## Generated by [Doccomment.js](https://github.com/l3laze/Doccomment)...so, that's great and stuff.`
   }
 
-  docs.push('<a name="page_top"></a>')
   docs.push(builder.header())
   docs.push(builder.toc())
   docs.push(builder.makeBody())
   docs.push(builder.footer())
 
-  return docs.join('\n\n\n')
+  return docs.join('\n')
 }
 
 module.exports = {
