@@ -23,16 +23,16 @@ async function generate (json, options) {
 
           if (/methods|properties/.test(branch)) {
             if (branch === 'properties') {
-              tic.push(` * [Properties](#module-${json.tree[ root ].module.toLowerCase()}-properties)`)
+              tic.push(`  * [Properties](#module-${json.tree[ root ].module.toLowerCase()}-properties)`)
             } else if (branch === 'methods') {
-              tic.push(` * [Methods](#module-${json.tree[ root ].module.toLowerCase()}-methods)`)
+              tic.push(`  * [Methods](#module-${json.tree[ root ].module.toLowerCase()}-methods)`)
             }
 
             for (let leaf of json.tree[ root ][ branch ]) {
               if (branch === 'properties') {
-                tic.push(`   * [${leaf.name}](#${json.tree[ root ].module.toLowerCase()}-${leaf.name.toLowerCase()})`)
+                tic.push(`    * [${leaf.name}](#${json.tree[ root ].module.toLowerCase()}-${leaf.name.toLowerCase()})`)
               } else if (branch === 'methods') {
-                tic.push(`   * ${leaf.async ? '`async` ' : ''}[${leaf.name + (leaf.arguments ? ' (' + leaf.arguments.map((i) => {
+                tic.push(`    * ${leaf.async ? '`async` ' : ''}[${leaf.name + (leaf.arguments ? ' (' + leaf.arguments.map((i) => {
                   return i.name + (i.default ? ` = ${i.default}` : '')
                 }).join(', ') + ')' : '')}](#${json.tree[ root ].module.toLowerCase()}-${leaf.name.toLowerCase()})`)
               }
@@ -51,7 +51,7 @@ async function generate (json, options) {
           if (branch === 'module') {
             contents.push(builder.articleSeparator, '\n')
             contents.push(`<a name='module-${json.tree[ root ].module.toLowerCase()}'></a>`)
-            contents.push(`# Module [${json.tree[ root ][ branch ]}](module-${json.tree[ root ].module.toLowerCase()})\n`)
+            contents.push(`# Module ${json.tree[ root ][ branch ]}\n`)
             contents.push(builder.sectionSeparator)
           }
 
