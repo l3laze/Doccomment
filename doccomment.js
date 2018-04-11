@@ -3,6 +3,7 @@
 const cli = require('cli')
 const path = require('path')
 const afs = require('./asyncLib.js')
+const findPJ = require('./findPJ.js')
 
 const existsSync = require('fs').existsSync
 const fsConstants = {
@@ -55,7 +56,7 @@ async function extractFromFile (data) {
 }
 
 async function extractDocumentation (src, pattern, recursive) {
-  console.debug(`Checking if ${src} exists`)
+  // console.debug(`Checking if ${src} exists`)
 
   if (!existsSync(src, fsConstants.F_OK)) {
     throw new Error(`${src} does not exist, or is not accessible with current permissions`)
@@ -63,14 +64,14 @@ async function extractDocumentation (src, pattern, recursive) {
     throw new Error(`${src} is not a directory`)
   }
 
-  console.debug(`Beginning extraction of ${src}`)
+  // console.debug(`Beginning extraction of ${src}`)
 
   const docs = {}
   const files = Array.from(await afs.readdirAsync(src)).filter((f) => pattern.test(f))
   let data
   let srcEntry
 
-  console.debug(`Found ${files.length} files matching pattern ${pattern} in ${src}`)
+  // console.debug(`Found ${files.length} files matching pattern ${pattern} in ${src}`)
 
   for (let f of files) {
     srcEntry = path.join(src, f)
@@ -78,7 +79,7 @@ async function extractDocumentation (src, pattern, recursive) {
     if ((await afs.lstatAsync(srcEntry)).isFile()) {
       data = '' + await afs.readFileAsync(srcEntry)
       docs[ f ] = await extractFromFile(data)
-      console.debug(`Added ${src}/${f} to docomment tree`)
+      // console.debug(`Added ${src}/${f} to docomment tree`)
     } else if ((await afs.lstatAsync(srcEntry)).isDirectory() && recursive) {
       docs[ f ] = extractDocs(srcEntry, pattern)
     }
@@ -211,10 +212,10 @@ async function compress (root) {
 
   for (let branch of root) {
     if (branch.module && !branch.function) {
-      console.info(`Found new module: ${branch.module}`)
+      // console.debug(`Found new module: ${branch.module}`)
       compressed = Object.assign(compressed, branch)
     } else if (branch.function) {
-      console.info(`Found new function ${branch.function}` + (branch.module ? ` of module ${branch.module}` : ''))
+      // console.debug(`Found new function ${branch.function}` + (branch.module ? ` of module ${branch.module}` : ''))
 
       tmp = Object.assign({
         name: branch.function
@@ -311,11 +312,9 @@ async function makeDocs (options) {
 
 (async () => {
   try {
-    pj = JSON.parse('' + await afs.readFileAsync(path.join(__dirname, 'package.json')))
-
     const options = cli.parse({
-      name: ['n', 'Name of the project; defaults to name value from package.json.', 'string', pj.name],
-      version: ['v', 'Documentation version; defaults to version value from package.json.', 'string', pj.version],
+      name: ['n', 'Name of the project; defaults to name value from package.json.', 'string', undefined],
+      version: ['v', 'Documentation version; defaults to version value from package.json.', 'string', undefined],
       source: ['s', 'The directory to search for source files to extract docs from.', 'path', path.join('./', 'src')],
       pattern: ['p', 'A pattern to select/ignore input files.', 'string', /\*\.js/],
       format: ['f', 'Format of output', 'string', 'md'],
@@ -329,6 +328,28 @@ async function makeDocs (options) {
 
     if (!options.source) {
       throw new Error('No source directory defined.')
+    }
+
+    let loc
+
+    if (!options.name || !options.version) {
+      try {
+        loc = await findPJ(options.source)
+        pj = JSON.parse('' + await afs.readFileAsync(loc))
+      } catch (err) {
+        if (err.message.indexOf('Could not find package.json.')) {
+          console.error('Could not find package.json for project.')
+          process.exit(1)
+        }
+      }
+
+      if (!options.name) {
+        options.name = pj.name
+      }
+
+      if (!options.version) {
+        options.version = pj.version
+      }
     }
 
     await makeDocs(options)

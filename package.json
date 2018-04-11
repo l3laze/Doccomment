@@ -1,6 +1,6 @@
 {
   "name": "doccomment",
-  "version": "0.0.2-rc11",
+  "version": "0.0.3-rc1",
   "main": "doccomment.js",
   "author": "Tom <l3l_aze@yahoo.com>",
   "copyright": "Copyright © 2017 ${author}",
