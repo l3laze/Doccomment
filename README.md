@@ -9,10 +9,62 @@ A *very* simple JSDoc-like documentation parser & documentation generator for No
 
 ----
 
-# **CLI Usage**
+
+# **Warning**
+
+This is not intended for use in anything important. It was mostly just a "can I do it?" project, and not some attempt to replace JSDoc or similar tools. It has not been well-tested or documented, and the code is a nightmare.
 
 
-`node /path/to/doccomment.js [options] [flags]`
+----
+
+
+# **Usage**
+
+
+## **Install**
+
+
+`yarn add doccomment` - to install locally to a single project.
+
+`yarn global add doccomment` - to install globally and enable use as a command.
+
+
+----
+
+
+
+## **Synopsis**
+
+
+`node /path/to/doccomment.js [options]`
+
+
+----
+
+
+## **Examples**
+
+
+Parse documentation using default values from `package.json`:
+
+`node /path/to/doccomment.js`
+
+***or***&nbsp; if installed globally:
+
+`doccomment`
+
+----
+
+Recursively parse documentation for project `--name` of version `--version` starting with the source directory `--source` and targeting files that match `--pattern`. Generate output with a custom `--generator`, and write it to `--out`.
+
+`node /path/to/doccomment.js --name Test --version 1.0 --source ./ --pattern test --generator ./node_modules/doccomment-to-html/index.js --recursive --out test.html`
+
+***or***&nbsp; if installed globally:
+
+`doccomment --name Test --version 1.0 --source ./ --pattern test --generator ./node_modules/doccomment-to-html/index.js --recursive --out test.html`
+
+
+----
 
 
 ## **Options**
@@ -30,7 +82,7 @@ A *very* simple JSDoc-like documentation parser & documentation generator for No
 > The directory to search for source files to extract docs from; defaults to `./src`.
 
 
-##### `RegExp|String` pattern (-p|--pattern)
+##### `RegExp|String` pattern (-t|--pattern)
 > A pattern to select/ignore input files; defaults to `/\*\.js/`.
 
 
@@ -50,19 +102,53 @@ A *very* simple JSDoc-like documentation parser & documentation generator for No
 > The output file; defaults to `./API.md`.
 
 
-# ----
-
-
-## **Flags**
-
-
 ##### `Boolean` recursive (-r|--recursive)
 > Recursively search for files in source directory; defaults to `false`.
 
 
-##### `Boolean` extract (-eo|--extract)
+##### `Boolean` extract (-e|--extract)
 > Extract documentation comments, but do not parse them; defaults to `false`.
 
 
-##### `Boolean` parse (-po|--parse)
+##### `Boolean` parse (-p|--parse)
 > Parse to intermediary JSON, but do not build docs; defaults to `false`.
+
+
+----
+
+
+# **Supported Tags**
+
+
+#### **@module <name\>**
+> The name of a module
+
+
+#### **@description <text\>**
+> Description for a module or method.
+
+
+#### **@property {type} <name\> - <description\>**
+> A property of a module.
+
+
+#### **@method <name\>**
+> The name of a method.
+
+
+#### **@async**
+> Method is async
+
+
+#### **@argument {type} <name\> - <description\>**
+> Argument to a method
+
+
+#### **@returns {type} - <description\>**
+> Return value from a method.
+
+
+#### **@throws {type} - <description\>**
+> Method throws.
+
+----

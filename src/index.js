@@ -314,7 +314,6 @@ async function makeDocs (options) {
       version: ['v', 'Documentation version; defaults to version value from package.json.', 'string', undefined],
       source: ['s', 'The directory to search for source files to extract docs from.', 'path', path.join('./', 'src')],
       pattern: ['t', 'A pattern to select/ignore input files.', 'string', /\*\.js/],
-      format: ['f', 'Format of output', 'string', 'md'],
       generator: ['g', 'Generator script for format', 'path', undefined],
       recursive: ['r', 'Recursively search for files in source directory.', 'boolean', false],
       intermediary: ['i', 'Intermediary output file (JSON).', 'path', path.join('./', 'doccomments.json')],
