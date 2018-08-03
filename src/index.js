@@ -6,22 +6,6 @@ const afs = require('./asyncLib.js')
 const findPJ = require('./findPJ.js')
 
 const existsSync = require('fs').existsSync
-const fsConstants = {
-  F_OK: require('fs').constants.F_OK,
-  R_OK: require('fs').constants.R_OK,
-  W_OK: require('fs').constants.W_OK,
-  X_OK: require('fs').constants.X_OK,
-  all: function all () {
-    const entries = Object.keys(fsConstants).filter((k) => k !== 'all')
-    let result = 0x0
-
-    for (let e of entries) {
-      result |= e
-    }
-
-    return result
-  }
-}
 let pj
 
 // ---- Extract Documentation Comments from source & store in a file...
@@ -30,6 +14,17 @@ const docStart = /\/\*\*/
 const docEnd = /\*\//
 
 let generator
+
+function getLine (offset) {
+  let stack = new Error().stack.split('\n')
+  let line = stack[(offset || 1) + 1].split(':')
+
+  return parseInt(line[line.length - 2], 10)
+}
+
+global.__defineGetter__('__LINE__', function () {
+  return getLine(2)
+})
 
 async function extractFromFile (data) {
   let inComment = false
@@ -58,7 +53,7 @@ async function extractFromFile (data) {
 async function extractDocumentation (src, pattern, recursive) {
   // console.debug(`Checking if ${src} exists`)
 
-  if (!existsSync(src, fsConstants.F_OK)) {
+  if (!existsSync(src)) {
     throw new Error(`${src} does not exist, or is not accessible with current permissions`)
   } else if (!(await afs.lstatAsync(src)).isDirectory()) {
     throw new Error(`${src} is not a directory`)
@@ -89,7 +84,7 @@ async function extractDocumentation (src, pattern, recursive) {
 }
 
 async function extractDocs (src, pattern, name, version) {
-  console.debug(`Extracting docs from ${src} with pattern ${pattern}`)
+  // console.debug(`Extracting docs from ${src} with pattern ${pattern}`)
   try {
     const docs = {
       name: name, // Project Name; defaults to package.json#name
@@ -302,7 +297,9 @@ async function makeDocs (options) {
           generator = require(options.generator)
         }
 
-        afs.writeFileAsync(path.join('./', 'API.md'), await generator.generate(parsed, options))
+        // console.debug('Starting generator')
+        let outPath = path.join('.', options.out)
+        afs.writeFileAsync(outPath, await generator.generate(parsed, options))
       }
     }
   } catch (err) {
@@ -316,14 +313,14 @@ async function makeDocs (options) {
       name: ['n', 'Name of the project; defaults to name value from package.json.', 'string', undefined],
       version: ['v', 'Documentation version; defaults to version value from package.json.', 'string', undefined],
       source: ['s', 'The directory to search for source files to extract docs from.', 'path', path.join('./', 'src')],
-      pattern: ['p', 'A pattern to select/ignore input files.', 'string', /\*\.js/],
+      pattern: ['t', 'A pattern to select/ignore input files.', 'string', /\*\.js/],
       format: ['f', 'Format of output', 'string', 'md'],
       generator: ['g', 'Generator script for format', 'path', undefined],
       recursive: ['r', 'Recursively search for files in source directory.', 'boolean', false],
-      intermediary: ['i', 'Intermediary output file (JSON).', 'path', path.join('doccomments.json')],
+      intermediary: ['i', 'Intermediary output file (JSON).', 'path', path.join('./', 'doccomments.json')],
       out: ['o', 'The output file', 'path', path.join('API.md')],
-      extract: ['eo', 'Extract documentation comments, but do not parse them', 'boolean', false],
-      parse: ['po', 'Parse to intermediary JSON, but do not build docs', 'boolean', false]
+      extract: ['e', 'Extract documentation comments, but do not parse them', 'boolean', false],
+      parse: ['p', 'Parse to intermediary JSON, but do not build docs', 'boolean', false]
     })
 
     if (!options.source) {

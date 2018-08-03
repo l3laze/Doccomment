@@ -2,9 +2,12 @@
 
 const path = require('path')
 const afs = require('./asyncLib.js')
+const findPJ = require('./findPJ.js')
 
 async function generate (json, options) {
-  const pj = JSON.parse(await afs.readFileAsync(path.join(__dirname, 'package.json')))
+  const pjPath = await findPJ(path.join(__dirname))
+  // console.debug('pj', pjPath)
+  const pj = JSON.parse(await afs.readFileAsync(pjPath))
   const docs = []
   // let indent = 0
 
@@ -75,10 +78,18 @@ async function generate (json, options) {
                 contents.push(`\n<a name='${json.tree[ root ].module.toLowerCase()}-${json.tree[ root ][ branch ][ leaf ].name.toLowerCase()}'></a>`)
                 contents.push(`#### ${json.tree[ root ][ branch ][ leaf ].async ? '`async` ' : ''} ${json.tree[ root ][ branch ][ leaf ].name +
                 (json.tree[ root ][ branch ][ leaf ].arguments ? ' (' + json.tree[ root ][ branch ][ leaf ].arguments.map((i) => {
-                  return i.name + (i.default ? ` = ${i.default}` : '')
+                  return i.name // + (i.default ? ` [default = ${i.default}]` : '')
                 }).join(', ') + ')' : '')} \n\n${json.tree[ root ][ branch ][ leaf ].description}\n` +
                 (json.tree[ root ][ branch ][ leaf ].arguments ? '> **Arguments**\n\n' + json.tree[ root ][ branch ][ leaf ].arguments.map((i) => {
-                  return `* \`${i.name}\`` + (i.default ? ` = ${i.default}` : '') + ` *is a* \`${i.type}\` - ${i.description}\n\n`
+                  return `* \`${i.name}\`` +
+                  /* (i.default ? ` = ${i.default}` : '') + */
+                  ` *is a* \`${i.type}\` ${(i.default
+                    ? '[default = ' +
+                      (i.type === 'String' ? '"' : '') +
+                        i.default +
+                      (i.type === 'String' ? '"' : '') +
+                    ']' : '')
+                  }\n>${i.description}\n\n`
                 }).join('\n') : '') +
                 (json.tree[ root ][ branch ][ leaf ].returns ? '\n> **Returns**\n\n' + json.tree[ root ][ branch ][ leaf ].returns.map((i) => {
                   return `* \`${i.type}\` - ${i.description}\n\n`

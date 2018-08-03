@@ -18,6 +18,8 @@ async function isDir (dir) {
 
 async function findPJ (dir) {
   try {
+    // console.debug('dir: ', dir)
+
     if (!isDir(dir)) {
       throw new Error(`${dir} is not a directory.`)
     }
@@ -26,11 +28,11 @@ async function findPJ (dir) {
 
     let res
 
-    if (files.indexOf('package.json') !== -1) {
+    if (files.includes('package.json')) {
       res = path.join(dir, 'package.json')
 
       return res
-    } else if (files.indexOf('.git') === -1) {
+    } else if (!files.includes('.git')) {
       res = await findPJ(path.join(dir, '..'))
 
       return res
@@ -38,6 +40,7 @@ async function findPJ (dir) {
 
     throw new Error('Could not find package.json.')
   } catch (err) {
+    // console.debug('ERROR: ', err.message)
     throw err
   }
 }
