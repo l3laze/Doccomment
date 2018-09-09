@@ -10,13 +10,15 @@
     "url": "git+github.com/l3laze/Doccomment.git"
   },
   "dependencies": {
-    "cli": "^1.0.1"
+    "cli": "^1.0.1",
+    "cmdo": "^1.0.0-rc2"
   },
   "devDependencies": {
     "standard": "^11.0.1"
   },
   "scripts": {
     "lint": "yarn standard",
-    "self-test": "node ./src/index.js -n Test -v 1.0 -s ./ -t test"
+    "test": "node ./src/index.js -n Test -v 1.0 -s ./ -t test",
+    "self-test": "node ./src/index.js -n $npm_package_name -v $npm_package_version -s ./ -t index"
   }
 }

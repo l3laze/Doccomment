@@ -126,7 +126,9 @@ async function generate (json, options) {
   docs.push(builder.makeBody())
   docs.push(builder.footer())
 
-  return docs.join('\n')
+  const documentation = docs.join('\n')
+  const out = path.join('.', options.out)
+  await afs.writeFileAsync(out, documentation)
 }
 
 module.exports = {
