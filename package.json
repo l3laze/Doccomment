@@ -1,6 +1,6 @@
 {
   "name": "doccomment",
-  "version": "0.0.4-rc1",
+  "version": "0.0.4-rc2",
   "main": "src/index.js",
   "author": "Tom <l3l_aze@yahoo.com>",
   "copyright": "Copyright © 2017 ${author}",
@@ -13,7 +13,8 @@
     "src"
   ],
   "dependencies": {
-    "cmdo": "^1.0.0-rc4"
+    "cmdo": "^1.0.0-rc4",
+    "ebug": "^1.0.0-rc12"
   },
   "devDependencies": {
     "standard": "^12.0.1"
