@@ -1,7 +1,7 @@
 {
   "name": "doccomment",
-  "version": "0.0.3-rc2",
-  "main": "index.js",
+  "version": "0.0.3-rc4",
+  "main": "src/index.js",
   "author": "Tom <l3l_aze@yahoo.com>",
   "copyright": "Copyright © 2017 ${author}",
   "description": "A very simple JSDoc-like code documentation parser & [markdown] generator",

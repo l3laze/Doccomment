@@ -1,4 +1,4 @@
-# **`doccomment`** API Documentation<br />Version `0.0.3-rc2`
+# **`doccomment`** API Documentation<br />Version `0.0.3-rc4`
 
 ## ------------
 ### **Table of Contents**
