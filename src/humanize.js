@@ -7,7 +7,7 @@ function humanize (bytes) {
   const threshold = 1024
   const units = ['kB','MB','GB','TB','PB','EB','ZB','YB']
 
-  var u = -1;
+  var u = -1
   do {
     bytes /= threshold
     ++u
