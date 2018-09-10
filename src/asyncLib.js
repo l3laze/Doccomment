@@ -1,7 +1,6 @@
 'use strict'
 
 const fs = require('fs')
-const mkdirp = require('mkdirp')
 
 async function readFileAsync (filePath) {
   return new Promise((resolve, reject) => {
@@ -19,18 +18,6 @@ async function writeFileAsync (filePath, data) {
   return new Promise((resolve, reject) => {
     fs.writeFile(filePath, data, (err) => {
       /* istanbul ignore next */
-      if (err) {
-        return reject(err)
-      }
-      return resolve()
-    })
-  })
-}
-
-/* istanbul ignore next */
-async function mkdirpAsync (filePath) {
-  return new Promise((resolve, reject) => {
-    mkdirp(filePath, undefined, (err) => {
       if (err) {
         return reject(err)
       }
@@ -92,7 +79,6 @@ async function lstatAsync (filePath) {
 module.exports = {
   readFileAsync,
   writeFileAsync,
-  mkdirpAsync,
   readdirAsync,
   unlinkAsync,
   accessAsync,
