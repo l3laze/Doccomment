@@ -3,6 +3,7 @@
 const path = require('path')
 const afs = require('./asyncLib.js')
 const findPJ = require('./findPJ.js')
+const { humanize } = require('./humanize.js')
 
 async function generate (json, options) {
   const pjPath = await findPJ(path.join(__dirname))
@@ -126,7 +127,10 @@ async function generate (json, options) {
   docs.push(builder.makeBody())
   docs.push(builder.footer())
 
-  return docs.join('\n')
+  const documentation = docs.join('\n')
+  const out = path.join('.', options.out)
+  console.info('Built %s @ %s from JSON @ %s.', options.out, humanize(documentation.length), humanize(JSON.stringify(json).length))
+  await afs.writeFileAsync(out, documentation)
 }
 
 module.exports = {

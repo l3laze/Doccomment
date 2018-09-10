@@ -1,9 +1,14 @@
+/**
+ * @module Doccomment
+ * @description Words
+ */
 'use strict'
 
-const cli = require('cli')
+const cmdo = require('cmdo')
 const path = require('path')
 const afs = require('./asyncLib.js')
 const findPJ = require('./findPJ.js')
+const { humanize } = require('./humanize.js')
 
 const existsSync = require('fs').existsSync
 let pj
@@ -13,19 +18,14 @@ let pj
 const docStart = /\/\*\*/
 const docEnd = /\*\//
 
-let generator
-
-function getLine (offset) {
-  let stack = new Error().stack.split('\n')
-  let line = stack[(offset || 1) + 1].split(':')
-
-  return parseInt(line[line.length - 2], 10)
-}
-
-global.__defineGetter__('__LINE__', function () {
-  return getLine(2)
-})
-
+/**
+ * @module Doccomment
+ * @async
+ * @method extractFromFile
+ * @description Extract doccomments as array of lines from file contents as a string.
+ * @arg {String} data - The array of lines from a file to extract doccomments from.
+ * returns {Array} - Lines that are doccomments from the source string.
+ */
 async function extractFromFile (data) {
   let inComment = false
   let docLines = []
@@ -50,6 +50,16 @@ async function extractFromFile (data) {
   return docomments
 }
 
+/**
+ * @module Doccomment
+ * @async
+ * @method extractDocumentation
+ * @description Extract doccomments from source files.
+ * @arg {String} src - Source directory.
+ * @arg {String} pattern - File pattern to search for; inclusive.
+ * @arg {Boolean} recursive - Recursive if true, and will descend into child directories.
+ * @returns {Object} - The parsed documentation tree.
+ */
 async function extractDocumentation (src, pattern, recursive) {
   // console.debug(`Checking if ${src} exists`)
 
@@ -66,13 +76,14 @@ async function extractDocumentation (src, pattern, recursive) {
   let data
   let srcEntry
 
-  // console.debug(`Found ${files.length} files matching pattern ${pattern} in ${src}`)
+  console.info(`Found ${files.length} files matching pattern ${pattern} in ${src}`)
 
   for (let f of files) {
     srcEntry = path.join(src, f)
 
     if ((await afs.lstatAsync(srcEntry)).isFile()) {
       data = '' + await afs.readFileAsync(srcEntry)
+      console.info('Found file %s @ %s', path.basename(srcEntry), humanize(data.length))
       docs[ f ] = await extractFromFile(data)
       // console.debug(`Added ${src}/${f} to docomment tree`)
     } else if ((await afs.lstatAsync(srcEntry)).isDirectory() && recursive) {
@@ -83,6 +94,16 @@ async function extractDocumentation (src, pattern, recursive) {
   return docs
 }
 
+/**
+ * @module Doccomment
+ * @async
+ * @method extractDocs
+ * @description Extract doccomments from source files.
+ * @arg {String} src - Source directory.
+ * @arg {String} pattern - File pattern to search for; inclusive.
+ * @arg {Boolean} recursive - Recursive if true, and will descend into child directories.
+ * @returns {Object} - The parsed documentation tree.
+ */
 async function extractDocs (src, pattern, name, version) {
   // console.debug(`Extracting docs from ${src} with pattern ${pattern}`)
   try {
@@ -102,6 +123,21 @@ async function extractDocs (src, pattern, name, version) {
 
 // ---- Parse/convert the documentation comments to JSON & store in same file as they are loaded from...
 
+/**
+ * @module Doccomment
+ * @async
+ * @method createDoccomment
+ * @description Create an object to hold a single doccomment.
+ * @property {String} module - The module this is part of.
+ * @property {String} function - The function this is documenting.
+ * @property {String} description - Description of a module or function.
+ * @property {String} async - Function is async.
+ * @property {String} throws - An error type this throws, and it's description.
+ * @property {String} returns - The value this returns.
+ * @property {String} arguments - Array of argument objects like `{ default, description, name, type }`.
+ * @property {String} properties - Object properties like `{ default, description, name, type }`.
+ * @returns {Object} - The creates doccomment object.
+ */
 function createDocComment () {
   let obj = {
     module: null,
@@ -117,10 +153,29 @@ function createDocComment () {
   return obj
 }
 
+/**
+ * @module Doccomment
+ * @async
+ * @method findLines
+ * @description Filter an array of lines to only the lines that match a pattern.
+ * @arg {Array} lines - The array of lines to search.
+ * @arg {String} pattern - The pattern to search for.
+ * @returns {Array} - The lines that match the pattern.
+ */
 function findLines (lines, pattern) {
   return lines.filter((line) => pattern.test(line))
 }
 
+/**
+ * @module Doccomment
+ * @async
+ * @method getChunk
+ * @description Extract the substring between `begin` and `end` from a string.
+ * @arg {String} data - The base string to extract the chunk from.
+ * @arg {String} begin - The beginning pattern to search for.
+ * @arg {String} end - The ending pattern to search for.
+ * @returns {String} - The extracted chunk.
+ */
 function getChunk (data, begin, end) {
   let start = data.search(begin)
   let stop = data.search(end)
@@ -130,10 +185,19 @@ function getChunk (data, begin, end) {
   return data.substring(start + begin.length, stop)
 }
 
+/**
+ * @module Doccomment
+ * @async
+ * @method parseTypedEntry
+ * @description Parse a doccomment that includes a type, e.g.: arg, property, throws, returns
+ * @arg {String} entry - The line to parse.
+ * @arg {Boolean} withName - Expect to find a name (for arg & param).
+ * @throws {Error} - To propagates errors.
+ * @returns {Object} - The parsed entry, like `{ description, type }` with arg and param optionally including `name` and `default`.
+ */
 function parseTypedEntry (entry, withName = false) {
   try {
     let t = getChunk(entry, '{', '}')
-    //                       } name -
     let n = withName ? getChunk(entry, '} ', / (=|-)/) : null
     let f = / = /.test(entry) ? getChunk(entry, '= ', ' -') : null
     let d = getChunk(entry, ' - ', '\n')
@@ -164,6 +228,15 @@ function parseTypedEntry (entry, withName = false) {
   }
 }
 
+/**
+ * @module Doccomment
+ * @async
+ * @method parse
+ * @description Parse a single line and create a doccomment Object using it's data.
+ * @arg {String} comment - The line to parse.
+ * @throws {Error} - To propagates errors.
+ * @returns {Object} - An object representing the parsed doccomment.
+ */
 async function parse (comment) {
   try {
     let com = createDocComment()
@@ -197,6 +270,14 @@ async function parse (comment) {
   }
 }
 
+/**
+ * @module Doccomment
+ * @async
+ * @method compress
+ * @description Prune a doccomment tree, removing empty branches and leaves (entries for methods, properties, modules). Also restructures by adding all methods and properties to the root instead of letting them branch out.
+ * @arg {Doccomment} root - A doccomment to prune.
+ * @returns {Object} - An object representing the doccomment after removing empty parts and restructuring.
+ */
 async function compress (root) {
   let compressed = {
     module: '',
@@ -234,6 +315,15 @@ async function compress (root) {
   return compressed
 }
 
+/**
+ * @module Doccomment
+ * @async
+ * @method build
+ * @description Convert intermediary version of parsed doccomments to a more useful version, recursively.
+ * @arg {String} src - A tree of doccomments from extractDoccomments.
+ * @throws {Error} - To propagate errors.
+ * @returns {Object} - A tree of doccomments like `tree: { module: { branches... }}`
+ */
 async function build (src) {
   try {
     let parsed
@@ -251,7 +341,6 @@ async function build (src) {
 
       src.tree[ root ] = await compress(src.tree[ root ])
     }
-    // src.tree = built.tree
 
     return src
   } catch (err) {
@@ -259,68 +348,92 @@ async function build (src) {
   }
 }
 
+/**
+ * @module Doccomment
+ * @async
+ * @method parseDocs
+ * @description Handle parsing, and if args say so building, documentation.
+ * @arg {Object} options - CLI options as an object of `{ name: val }`.
+ * @throws {Error} - To propagate errors.
+ * @returns {Object} - The parsed docs based on options -- intermediary or human readable.
+ */
 async function parseDocs (options) {
   try {
     let srcPath = options.source.replace(/(\.\/)/, `${__dirname}/`)
 
     let documentation = await extractDocs(srcPath, new RegExp(options.pattern), options.name, options.version)
+    
+    console.info('Found %s of doccomments in all files.', humanize(JSON.stringify(documentation).length))
 
-    await afs.writeFileAsync(options.intermediary, JSON.stringify(documentation, null, 2))
+    if (options.intermediary) {
+      await afs.writeFileAsync(path.join('doccomments.json'), JSON.stringify(documentation, null, 2))
+    }
 
     // ---- Extract above, convert below...
 
     if (!options.extract) {
       documentation = await build(documentation)
-
-      await afs.writeFileAsync(options.intermediary, JSON.stringify(documentation, null, 2))
-
-      return documentation
     }
+
+    if (options.intermediary) {
+      await afs.writeFileAsync(path.join('doccomments.json'), JSON.stringify(documentation, null, 2))
+    }
+
+    return documentation
   } catch (err) {
-    console.error(err)
-    process.exit(1)
+    throw err
   }
 }
 
 // ---- Build documentation from intermediary JSON, using template functions to generate the data.
 
+/**
+ * @module Doccomment
+ * @async
+ * @method makeDocs
+ * @description Uses the generator from options.generator, or the default markdown generator, to build human-readable docs; also writes them to disk.
+ * @arg {Object} options - CLI options as an object of `{ name: val }`.
+ * @throws {Error} - To propagate errors.
+ */
 async function makeDocs (options) {
   try {
+    console.info('Parsing docs for %s...', options.name)
     const parsed = await parseDocs(options)
+    let gen
 
     if (!options.parse) {
       // Generate human-readable docs...
-      if (options.format === 'md') {
-        if (!options.generator) {
-          generator = require('./doccomment-json-to-markdown.js')
-        } else {
-          generator = require(options.generator)
-        }
-
-        // console.debug('Starting generator')
-        let outPath = path.join('.', options.out)
-        afs.writeFileAsync(outPath, await generator.generate(parsed, options))
+      if (!options.generator) {
+        gen = require('./doccomment-json-to-markdown.js')
+      } else {
+        gen = require(options.generator)
       }
+
+      await gen.generate(parsed, options)
     }
   } catch (err) {
     throw err
   }
 }
 
+/*
+ * Parse CLI args, verify options, and run.
+ */
 (async () => {
   try {
-    const options = cli.parse({
+    const opts = {
       name: ['n', 'Name of the project; defaults to name value from package.json.', 'string', undefined],
       version: ['v', 'Documentation version; defaults to version value from package.json.', 'string', undefined],
-      source: ['s', 'The directory to search for source files to extract docs from.', 'path', path.join('./', 'src')],
+      source: ['s', 'The directory to search for source files to extract docs from.', 'path', path.join('src')],
       pattern: ['t', 'A pattern to select/ignore input files.', 'string', /\*\.js/],
       generator: ['g', 'Generator script for format', 'path', undefined],
       recursive: ['r', 'Recursively search for files in source directory.', 'boolean', false],
-      intermediary: ['i', 'Intermediary output file (JSON).', 'path', path.join('./', 'doccomments.json')],
-      out: ['o', 'The output file', 'path', path.join('API.md')],
+      out: ['o', 'The output file', 'path', path.join('api.md')],
+      intermediary: ['i', 'Save intermediary output to file as JSON.', 'boolean', false],
       extract: ['e', 'Extract documentation comments, but do not parse them', 'boolean', false],
       parse: ['p', 'Parse to intermediary JSON, but do not build docs', 'boolean', false]
-    })
+    }
+    const options = cmdo.parse(opts)
 
     if (!options.source) {
       throw new Error('No source directory defined.')
