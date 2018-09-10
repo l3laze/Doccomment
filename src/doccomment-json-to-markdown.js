@@ -4,13 +4,12 @@ const path = require('path')
 const afs = require('./asyncLib.js')
 const findPJ = require('./findPJ.js')
 const { humanize } = require('./humanize.js')
+// const debug = require('ebug')('doccomment-json-to-markdown')
 
 async function generate (json, options) {
   const pjPath = await findPJ(path.join(__dirname))
-  // console.debug('pj', pjPath)
   const pj = JSON.parse(await afs.readFileAsync(pjPath))
   const docs = []
-  // let indent = 0
 
   const builder = {
     articleSeparator: '----',

@@ -9,6 +9,7 @@ const path = require('path')
 const afs = require('./asyncLib.js')
 const findPJ = require('./findPJ.js')
 const { humanize } = require('./humanize.js')
+const debug = require('ebug')('doccomment')
 
 const existsSync = require('fs').existsSync
 let pj
@@ -29,7 +30,7 @@ const docEnd = /\*\//
 async function extractFromFile (data) {
   let inComment = false
   let docLines = []
-  let docomments = []
+  let doccomments = []
 
   for (let line of data.split('\n')) {
     if (!inComment && docStart.test(line)) {
@@ -42,12 +43,12 @@ async function extractFromFile (data) {
 
     if (inComment && docEnd.test(line)) {
       inComment = false
-      docomments.push(docLines)
+      doccomments.push(docLines)
       docLines = []
     }
   }
 
-  return docomments
+  return doccomments
 }
 
 /**
@@ -61,7 +62,7 @@ async function extractFromFile (data) {
  * @returns {Object} - The parsed documentation tree.
  */
 async function extractDocumentation (src, pattern, recursive) {
-  // console.debug(`Checking if ${src} exists`)
+  debug(`Checking if ${src} exists`)
 
   if (!existsSync(src)) {
     throw new Error(`${src} does not exist, or is not accessible with current permissions`)
@@ -69,7 +70,7 @@ async function extractDocumentation (src, pattern, recursive) {
     throw new Error(`${src} is not a directory`)
   }
 
-  // console.debug(`Beginning extraction of ${src}`)
+  debug(`Beginning extraction of ${src}`)
 
   const docs = {}
   const files = Array.from(await afs.readdirAsync(src)).filter((f) => pattern.test(f))
@@ -85,7 +86,7 @@ async function extractDocumentation (src, pattern, recursive) {
       data = '' + await afs.readFileAsync(srcEntry)
       console.info('Found file %s @ %s', path.basename(srcEntry), humanize(data.length))
       docs[ f ] = await extractFromFile(data)
-      // console.debug(`Added ${src}/${f} to docomment tree`)
+      debug(`Added ${src}/${f} to doccomment tree`)
     } else if ((await afs.lstatAsync(srcEntry)).isDirectory() && recursive) {
       docs[ f ] = extractDocs(srcEntry, pattern)
     }
@@ -101,11 +102,12 @@ async function extractDocumentation (src, pattern, recursive) {
  * @description Extract doccomments from source files.
  * @arg {String} src - Source directory.
  * @arg {String} pattern - File pattern to search for; inclusive.
- * @arg {Boolean} recursive - Recursive if true, and will descend into child directories.
+ * @arg {String} name - The module name.
+ * @arg {String} version - The module version.
  * @returns {Object} - The parsed documentation tree.
  */
 async function extractDocs (src, pattern, name, version) {
-  // console.debug(`Extracting docs from ${src} with pattern ${pattern}`)
+  debug(`Extracting docs from ${src} with pattern ${pattern}`)
   try {
     const docs = {
       name: name, // Project Name; defaults to package.json#name
@@ -138,7 +140,7 @@ async function extractDocs (src, pattern, name, version) {
  * @property {String} properties - Object properties like `{ default, description, name, type }`.
  * @returns {Object} - The creates doccomment object.
  */
-function createDocComment () {
+function createDoccomment () {
   let obj = {
     module: null,
     function: null,
@@ -239,7 +241,7 @@ function parseTypedEntry (entry, withName = false) {
  */
 async function parse (comment) {
   try {
-    let com = createDocComment()
+    let com = createDoccomment()
 
     for (let line of comment) {
       if (/@module/.test(line)) {
@@ -288,10 +290,10 @@ async function compress (root) {
 
   for (let branch of root) {
     if (branch.module && !branch.function) {
-      // console.debug(`Found new module: ${branch.module}`)
+      debug(`Found new module: ${branch.module}`)
       compressed = Object.assign(compressed, branch)
     } else if (branch.function) {
-      // console.debug(`Found new function ${branch.function}` + (branch.module ? ` of module ${branch.module}` : ''))
+      debug(`Found new function ${branch.function}` + (branch.module ? ` of module ${branch.module}` : ''))
 
       tmp = Object.assign({
         name: branch.function
@@ -362,8 +364,8 @@ async function parseDocs (options) {
     let srcPath = options.source.replace(/(\.\/)/, `${__dirname}/`)
 
     let documentation = await extractDocs(srcPath, new RegExp(options.pattern), options.name, options.version)
-    
-    console.info('Found %s of doccomments in all files.', humanize(JSON.stringify(documentation).length))
+
+    console.info('Found about %s of doccomments in all files.', humanize(JSON.stringify(documentation).length))
 
     if (options.intermediary) {
       await afs.writeFileAsync(path.join('doccomments.json'), JSON.stringify(documentation, null, 2))

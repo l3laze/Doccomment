@@ -143,11 +143,11 @@ cli-width@^2.0.0:
   version "2.2.0"
   resolved "https://registry.yarnpkg.com/cli-width/-/cli-width-2.2.0.tgz#ff19ede8a9a5e579324147b0c11f0fbcbabed639"
 
-cmdo@^1.0.0-rc3:
-  version "1.0.0-rc3"
-  resolved "https://registry.yarnpkg.com/cmdo/-/cmdo-1.0.0-rc3.tgz#cc8eb77c9be270c4d8e6b6a3f47f448110407726"
+cmdo@^1.0.0-rc4:
+  version "1.0.0-rc4"
+  resolved "https://registry.yarnpkg.com/cmdo/-/cmdo-1.0.0-rc4.tgz#83d43fac57ba1108630e0a88bddccdb6c074bd55"
   dependencies:
-    ebug "^1.0.0-rc2"
+    ebug "^1.0.0-rc12"
 
 color-convert@^1.9.0:
   version "1.9.1"
@@ -240,9 +240,9 @@ doctrine@^2.1.0:
   dependencies:
     esutils "^2.0.2"
 
-ebug@^1.0.0-rc2:
-  version "1.0.0-rc9"
-  resolved "https://registry.yarnpkg.com/ebug/-/ebug-1.0.0-rc9.tgz#ddb984cf5f990fda7ae042cdf2b1f9ca2e32f602"
+ebug@^1.0.0-rc12:
+  version "1.0.0-rc12"
+  resolved "https://registry.yarnpkg.com/ebug/-/ebug-1.0.0-rc12.tgz#f5cbac9b181a67ccd177e2347eac3bc1345d400f"
 
 error-ex@^1.2.0, error-ex@^1.3.1:
   version "1.3.1"

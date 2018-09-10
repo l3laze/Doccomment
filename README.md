@@ -26,8 +26,6 @@ This is not intended for use in anything important. It was mostly just a "can I 
 
 `yarn add doccomment` - to install locally to a single project.
 
-`yarn global add doccomment` - to install globally and enable use as a command.
-
 
 ----
 
@@ -49,19 +47,12 @@ Parse documentation using default values from `package.json`:
 
 `node /path/to/doccomment.js`
 
-***or***&nbsp; if installed globally:
-
-`doccomment`
 
 ----
 
 Recursively parse documentation for project `--name` of version `--version` starting with the source directory `--source` and targeting files that match `--pattern`. Generate output with a custom `--generator`, and write it to `--out`.
 
 `node /path/to/doccomment.js --name Test --version 1.0 --source ./ --pattern test --generator ./node_modules/doccomment-to-html/index.js --recursive --out test.html`
-
-***or***&nbsp; if installed globally:
-
-`doccomment --name Test --version 1.0 --source ./ --pattern test --generator ./node_modules/doccomment-to-html/index.js --recursive --out test.html`
 
 
 ----

@@ -9,8 +9,11 @@
     "type": "git",
     "url": "git+github.com/l3laze/Doccomment.git"
   },
+  "files": [
+    "src"
+  ],
   "dependencies": {
-    "cmdo": "^1.0.0-rc3"
+    "cmdo": "^1.0.0-rc4"
   },
   "devDependencies": {
     "standard": "^12.0.1"

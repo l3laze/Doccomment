@@ -6,7 +6,7 @@
   * [Methods](#module-doccomment-methods)
     * `async` [extractFromFile (data)](#doccomment-extractfromfile)
     * `async` [extractDocumentation (src, pattern, recursive)](#doccomment-extractdocumentation)
-    * `async` [extractDocs (src, pattern, recursive)](#doccomment-extractdocs)
+    * `async` [extractDocs (src, pattern, name, version)](#doccomment-extractdocs)
     * `async` [createDoccomment](#doccomment-createdoccomment)
     * `async` [findLines (lines, pattern)](#doccomment-findlines)
     * `async` [getChunk (data, begin, end)](#doccomment-getchunk)
@@ -67,7 +67,7 @@ Extract doccomments from source files.
 ## ------------
 
 <a name='doccomment-extractdocs'></a>
-#### `async`  extractDocs (src, pattern, recursive) 
+#### `async`  extractDocs (src, pattern, name, version) 
 
 Extract doccomments from source files.
 > **Arguments**
@@ -80,8 +80,12 @@ Extract doccomments from source files.
 >File pattern to search for; inclusive.
 
 
-* `recursive` *is a* `Boolean` 
->Recursive if true, and will descend into child directories.
+* `name` *is a* `String` 
+>The module name.
+
+
+* `version` *is a* `String` 
+>The module version.
 
 
 > **Returns**
