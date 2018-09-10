@@ -1,6 +1,6 @@
 {
   "name": "doccomment",
-  "version": "0.0.3-rc2",
+  "version": "0.0.3-rc3",
   "main": "index.js",
   "author": "Tom <l3l_aze@yahoo.com>",
   "copyright": "Copyright © 2017 ${author}",
@@ -10,15 +10,14 @@
     "url": "git+github.com/l3laze/Doccomment.git"
   },
   "dependencies": {
-    "cli": "^1.0.1",
-    "cmdo": "^1.0.0-rc2"
+    "cmdo": "^1.0.0-rc3"
   },
   "devDependencies": {
-    "standard": "^11.0.1"
+    "standard": "^12.0.1"
   },
   "scripts": {
     "lint": "yarn standard",
     "test": "node ./src/index.js -n Test -v 1.0 -s ./ -t test",
-    "self-test": "node ./src/index.js -n $npm_package_name -v $npm_package_version -s ./ -t index"
+    "docs": "node ./src/index.js -n $npm_package_name -v $npm_package_version -s ./ -t index"
   }
 }

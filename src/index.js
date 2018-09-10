@@ -4,10 +4,11 @@
  */
 'use strict'
 
-const cli = require('cli')
+const cmdo = require('cmdo')
 const path = require('path')
 const afs = require('./asyncLib.js')
 const findPJ = require('./findPJ.js')
+const { humanize } = require('./humanize.js')
 
 const existsSync = require('fs').existsSync
 let pj
@@ -16,19 +17,6 @@ let pj
 
 const docStart = /\/\*\*/
 const docEnd = /\*\//
-
-let generator
-
-function getLine (offset) {
-  let stack = new Error().stack.split('\n')
-  let line = stack[(offset || 1) + 1].split(':')
-
-  return parseInt(line[line.length - 2], 10)
-}
-
-global.__defineGetter__('__LINE__', function () {
-  return getLine(2)
-})
 
 /**
  * @module Doccomment
@@ -88,13 +76,14 @@ async function extractDocumentation (src, pattern, recursive) {
   let data
   let srcEntry
 
-  // console.debug(`Found ${files.length} files matching pattern ${pattern} in ${src}`)
+  console.info(`Found ${files.length} files matching pattern ${pattern} in ${src}`)
 
   for (let f of files) {
     srcEntry = path.join(src, f)
 
     if ((await afs.lstatAsync(srcEntry)).isFile()) {
       data = '' + await afs.readFileAsync(srcEntry)
+      console.info('Found file %s @ %s', path.basename(srcEntry), humanize(data.length))
       docs[ f ] = await extractFromFile(data)
       // console.debug(`Added ${src}/${f} to docomment tree`)
     } else if ((await afs.lstatAsync(srcEntry)).isDirectory() && recursive) {
@@ -209,7 +198,6 @@ function getChunk (data, begin, end) {
 function parseTypedEntry (entry, withName = false) {
   try {
     let t = getChunk(entry, '{', '}')
-    //                       } name -
     let n = withName ? getChunk(entry, '} ', / (=|-)/) : null
     let f = / = /.test(entry) ? getChunk(entry, '= ', ' -') : null
     let d = getChunk(entry, ' - ', '\n')
@@ -353,7 +341,6 @@ async function build (src) {
 
       src.tree[ root ] = await compress(src.tree[ root ])
     }
-    // src.tree = built.tree
 
     return src
   } catch (err) {
@@ -375,6 +362,8 @@ async function parseDocs (options) {
     let srcPath = options.source.replace(/(\.\/)/, `${__dirname}/`)
 
     let documentation = await extractDocs(srcPath, new RegExp(options.pattern), options.name, options.version)
+    
+    console.info('Found %s of doccomments in all files.', humanize(JSON.stringify(documentation).length))
 
     if (options.intermediary) {
       await afs.writeFileAsync(path.join('doccomments.json'), JSON.stringify(documentation, null, 2))
@@ -408,21 +397,19 @@ async function parseDocs (options) {
  */
 async function makeDocs (options) {
   try {
+    console.info('Parsing docs for %s...', options.name)
     const parsed = await parseDocs(options)
+    let gen
 
     if (!options.parse) {
       // Generate human-readable docs...
-      let isDefault = false
-
       if (!options.generator) {
-        isDefault = true
-        generator = require('./doccomment-json-to-markdown.js')
+        gen = require('./doccomment-json-to-markdown.js')
       } else {
-        generator = require(options.generator)
+        gen = require(options.generator)
       }
 
-      // console.debug('Starting generator')
-      await generator.generate(parsed, options)
+      await gen.generate(parsed, options)
     }
   } catch (err) {
     throw err
@@ -434,7 +421,7 @@ async function makeDocs (options) {
  */
 (async () => {
   try {
-    const options = cli.parse({
+    const opts = {
       name: ['n', 'Name of the project; defaults to name value from package.json.', 'string', undefined],
       version: ['v', 'Documentation version; defaults to version value from package.json.', 'string', undefined],
       source: ['s', 'The directory to search for source files to extract docs from.', 'path', path.join('src')],
@@ -445,7 +432,8 @@ async function makeDocs (options) {
       intermediary: ['i', 'Save intermediary output to file as JSON.', 'boolean', false],
       extract: ['e', 'Extract documentation comments, but do not parse them', 'boolean', false],
       parse: ['p', 'Parse to intermediary JSON, but do not build docs', 'boolean', false]
-    })
+    }
+    const options = cmdo.parse(opts)
 
     if (!options.source) {
       throw new Error('No source directory defined.')
