@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8">
+  <title>WWE SuperCard Guide</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Tools for the game WWE SuperCard.">
+  <style>
+    #controls {
+      position: fixed;
+      right: 28px;
+    }
+
+    textarea {
+      line-height: 1.2rem;
+      font-family: monospace;
+      color: lightgray;
+      padding-top: 4px;
+      font-weight: bold;
+      -webkit-box-sizing: border-box;
+      -moz-box-sizing: border-box;
+      box-sizing: border-box;
+      height: calc(50vh - 12px);
+      resize: none;
+      scroll-behavior: smooth;
+      -webkit-box-shadow: none;
+      box-shadow: none;
+      outline: none;
+      white-space: pre;
+      overflow-wrap: normal;
+      overflow-x: hidden;
+    }
+
+    .editor {
+      width: calc(100% - 2.2rem);
+      background: black;
+      padding-left: 6px;
+      resize: none;
+    }
+
+    .lines {
+      float: left;
+      width: 2.2rem;
+      background: blueviolet;
+      text-align: right;
+      overflow-y: hidden;
+    }
+
+    .lines::-webkit-scrollbar {
+      display: none;
+    }
+
+    table {
+      border-collapse: collapse;
+    }
+
+    th, tr td {
+      border: 1px solid black;
+      padding-left: 4px;
+      padding-right: 4px;
+      font-weight: bold;
+      font-family: sans-serif;
+    }
+
+    .editing .preview {
+      display: none;
+    }
+
+    .previewing .edit {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+<span id="controls" class="editing">
+  <button id="renderText" onclick="parse()" class="edit">Text</button>
+  <button id="renderHtml" onclick="parse({renderer: htmlRenderer})" class="edit">HTML</button>
+  <button id="preview" onclick="previewHtml()" class="edit">Preview</button>
+  <button id="edit" onclick="edit()" class="preview">Edit</button>
+</span>
+
+<span id="container">
+<textarea id="lines_ta_input" class="lines"></textarea>
+<textarea id="ta_input" class="editor">
+# @root What?
+# @section "Hello! Hello! HELLOOOO!!!!"
+#  @list "Something Something" - List description.
+#   @item 'Something Here' - Description of item.
+*   @item Here be GitHub - @link https://www.github.com
+*   @item @text Again - whirled#=+!@#$%^&*()-_{}[]\|:;,>&lt;.
+*   @item "Meow, meow, meow." - @image https://avatars.githubusercontent.com/u/18404758?s=16&v=4
+#  @end
+= @end
+= EMPTY
+=
+= @separator
+=
+* @section Another Section! - @bold @italic @yourmotherfigure
+~  @text - @only_predetermined_@tag_are_parsed
+~ @end
+!
+! @separator
+!
+# @section {Type} Section Name = 'example' - Description.
+#  @hello world
+*  @table Descriptive Title
+*   @thead - @bold 1,2,3
+*   @trow - d,e,f
+*   @trow - g,h,@text   h4i  ---     th3r3%
+*  @end
+! @end
+*</textarea>
+<br>
+<textarea id="lines_ta_output" class="lines"></textarea>
+<textarea id="ta_output" class="editor"></textarea>
+</span>
+<span id="htmlContainer"></span>
+<script src="doc.js"></script>
+<script src="htmlRenderer.js"></script>
+</body>
+</html>
