@@ -12,7 +12,7 @@ function defaultRenderer (data, errors) {
 
 async function parse (options = {}) {
   // Built with https://regexr.com/
-  const re = /.*?@(?<tag>[\w]+)(?: +\{(?<type>\w+)\})?(?:(?: +['"]?(?<name>[^'"\-=\n]+))?(?:['"]?(?: *\= +['"]?(?<default>\w+)['"]?)?(?: ?-?)+(?<content>[^'"\n]+))?)?\n?/g
+  const re = /@(?<tag>[\w]+)(?: +)?(?<data>[^\n]+)?/g
 
   const data = document.getElementById('ta_input').value
 
@@ -23,7 +23,7 @@ async function parse (options = {}) {
   let obj = {}
 
   if (typeof options.tags === 'undefined') {
-    options.tags = 'root|section|list|item|table|thead|image|link|trow|text|end|separator'.split('|')
+    options.tags = 'root|section|list|item|table|thead|image|link|trow|text|end|separator|empty'.split('|')
   }
   
   if (typeof options.renderer === 'undefined') {
@@ -41,20 +41,8 @@ async function parse (options = {}) {
       if (typeof found.groups.tag !== 'undefined') {
         obj.tag = found.groups.tag.trim()
 
-        if (typeof found.groups.type !== 'undefined') {
-          obj.type = found.groups.type.trim()
-        }
-
-        if (typeof found.groups.name !== 'undefined') {
-          obj.name = found.groups.name.trim()
-        }
-
-        if (typeof found.groups.default !== 'undefined') {
-          obj.default = found.groups.default.trim()
-        }
-
-        if (typeof found.groups.content !== 'undefined') {
-          obj.content = found.groups.content.trim()
+        if (typeof found.groups.data !== 'undefined') {
+          obj.data = found.groups.data.trim()
         }
       }
 
