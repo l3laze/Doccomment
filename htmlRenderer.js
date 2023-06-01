@@ -52,11 +52,10 @@ ${options.separate ? '\n' + options.indentChar.repeat(options.indent) : ''}`
 }
 
 function renderSecondaryTags (data) {
-  
   const secondary = [ 'image', 'link', 'text' ]
-  const re = /\>(?<name>.*?)?(?:[ -]+)?@(?<tag>[\w]+)(?:[ -]+)?(?<data>.*?)(?<endof>\<\/.+)/
+  const re = /@(?<tag>[\w]+)(?: +)(?<data>[^\n<]+)(?<rest>[^\n]+)/g
 
-  let temp, start
+  let temp, start = 0, link
 
   for (let x = 0; x < data.length; x++) {
     if (/\n$/.test(data[x]) &&
@@ -65,30 +64,38 @@ function renderSecondaryTags (data) {
       data[x] = data[x].replace(/\n$/, '')
     }
 
-    for (let y = 0; y < secondary.length; y++) {
-      if ((temp = re.exec(data[x])) !== null) {
-        start = data[x].indexOf('>') + 1
-        
-        if (start < 1) {
-          start = data[x].search(/[^ "]/)
-        }
+    while ((temp = re.exec(data[x])) !== null) {
+      start = data[x].indexOf('@' + temp.groups.tag) || 0
 
-        switch(temp.groups.tag) {
-          case 'link':
-            data[x] = `${data[x].substring(0, start)}<a href="#${temp.groups.data}">${temp.groups.name}</a>${temp.groups.endof}`
-          break
+      switch(temp.groups.tag) {
+        case 'link':
+          link = temp.groups.data.split(' ').slice(1).join(' ').split('<')[0]
 
-          case 'image':
-            data[x] = `${data[x].substring(0, start)}<img src="${temp.groups.data}" alt="${temp.groups.name}">${temp.groups.endof}`
-          break
+          if (link === '' || link.length === 0) {
+            link = temp.groups.data.split(' ')[0]
+          }
 
-          case 'text':
-            data[x] = `${data[x].substring(0, start)}<span>${temp.groups.data}</span>${temp.groups.endof}`
-          break
-        }
+          data[x] = `${data[x].substring(0, start)}<a href="${temp.groups.data.split(' ')[0]}">${link}</a>${temp.groups.rest}`
+        break
+
+        case 'image':
+          data[x] = `${data[x].substring(0, start)}<img src="${data[x].slice(start).split(' ')[1].indexOf('</') > -1 ? data[x].slice(start).split(' ')[1].replace('</', '"></') : data[x].slice(start).split(' ')[1] + '">'}${data[x].slice(start).split(' ').slice(2).join(' ')}`
+        break
+
+        case 'text':
+          data[x] = `${data[x].substring(0, start)}${data[x].slice(start).split(' ')[1]}`
+        break
+
+        case 'empty':
+          data[x] = '<br>'
+        break
+      }
+
+      if (secondary.filter((s) => data[x].indexOf(s) > -1).length > 0 && re.test(data[x])) {
+        continue
       }
     }
-  }
+  } 
 
   return data
 }
@@ -98,25 +105,21 @@ function renderToc (toc, options = {indent: 0}) {
 
   let temp
 
-  temp = toc.map((a) => `blahblah>${a[0]} - @link ${a[1]}</yadda`)
+  temp = toc.map((a) => {
+    return `blahblah>@link ${a[1]} ${a[0]}</yadda`
+  })
 
   temp = renderSecondaryTags(temp)
 
   temp = temp.join('\n').replace(/blahblah\>/g, '').replace(/\<\/yadda/g, '').split('\n')
 
-  temp = temp.map((a, index) => {
+  temp = temp.map((a, index) => htmlTag('li', a, {indent: options.indent + 6}))
 
-    console.log(a)
+  temp = htmlTag('ul', '\n' + temp.join('\n') + '\n' + ' '.repeat(options.indent + 4), {indent: options.indent + 4})
 
-    return htmlTag('li',
-      (toc[index].length === 3 &&
-        toc[index][2].length > 0)
-        ? a + '\n' + ' '.repeat(options.indent) + renderToc(toc[index][2], {indent: options.indent + 4}) + '\n' + ' '.repeat(4)
-        : a
-      , {indent: options.indent + 4})
-  })
+  temp = htmlTag('h1', 'Table of Contents', {indent: 4}) + '\n' + temp
 
-  temp = htmlTag('ul', '\n' + temp.join('\n') + '\n' + ' '.repeat(options.indent + 2), {indent: options.indent + 2})
+  temp = htmlTag('section', '\n' + temp + '\n  ', {indent: 2}) + '\n'
 
   return temp
 }
@@ -127,11 +130,13 @@ function htmlRenderer (data, errors) {
 
   errors.length > 0 ? hout.value += '\n' + errors.join('\n') : ''
 
-  let result = [], toc = []
-
+  let result = []
+  let toc = []
   const stack = []
 
   let temp, htag, link, start, hasRoot = false
+
+  errors = []
 
   data.forEach((e) => {
     switch (e.tag) {
@@ -140,26 +145,26 @@ function htmlRenderer (data, errors) {
 
         result.push(htmlTag('html',
           htmlTag('head',
-            '\n' + htmlTag('title', e.name) + '\n') +
+            '\n' + htmlTag('title', e.data) + '\n') +
           '\n' +
           htmlTag('body', '', {closed: false, separate: true}),
           {closed: false, separate: true}))
       break
 
       case 'section':
-        link = /^[^ "]+$/.test(e.name) ? e.name : e.name.replace(/"/g, '').replace(/ /g, '_')
+        link = /^[^ "]+$/.test(e.data) ? e.data : e.data.replace(/"/g, '').replace(/ /g, '_')
 
         if (stack.length > 0 && stack[stack.length - 1][0] === 'section') {
-          htag = 'h3'
-          toc[toc.length - 1][2].push([e.name, link])
-        } else {
           htag = 'h2'
-          toc.push([e.name, link, []])
+          toc[toc.length - 1][2].push([e.data, '#' + link])
+        } else {
+          htag = 'h1'
+          toc.push([e.data, '#' + link])
         }
 
         stack.push(['section', {indent: 2 * (stack.length + 1), separate: true}])
         result.push(htmlTag('section', '\n' + htmlTag(
-            htag + ` id="${link}"`, e.name, {closed: false, indent: (2 * (stack.length + 1))}),
+            htag + ` id="${link}"`, e.data, {closed: false, indent: (2 * (stack.length + 1))}),
           {closed: false, indent: 2 * stack.length}))
 
         result[ result.length - 1] += closeTag(htag)
@@ -171,7 +176,7 @@ function htmlRenderer (data, errors) {
       break
 
       case 'item':
-        result.push(htmlTag('li', e.name + ' - ' + e.content, {indent: 2 * (stack.length + 1)}))
+        result.push(htmlTag('li', e.data, {indent: 2 * (stack.length + 1)}))
       break
 
       case 'end':
@@ -181,52 +186,67 @@ function htmlRenderer (data, errors) {
       break
 
       case 'text':
-        result.push(`${'  '.repeat(stack.length + 1) + e.content + '\n'}`)
+        result.push(`${'  '.repeat(stack.length + 1) + e.data + '\n'}`)
       break
 
       case 'link':
-        result.push(`${'  '.repeat(stack.length + 1) + e.content + '\n'}`)
+        result.push(`${'  '.repeat(stack.length + 1) + e.data + '\n'}`)
       break
 
       case 'image':
-        result.push(selfTag(`img src=${e.content}`, {indent: 2 * (stack.length + 1)}))
+        result.push(selfTag(`img src=${e.data}`, {indent: 2 * (stack.length + 1)}))
       break
 
       case 'separator':
         result.push(selfTag('hr', {indent: 2 * (stack.length + 1), separate: true}))
       break
 
+      case 'empty':
+        result.push(selfTag('br', {indent: 2 * (stack.length + 1), separate: true}))
+      break
+
       case 'table':
         stack.push(['table', {indent: 2 * (stack.length + 1), separate: true}])
-        result.push('\n' + htmlTag('h3', e.name, {indent: 4}))
+        result.push('\n' + htmlTag('h2', e.data, {indent: 4}))
         result.push(htmlTag('table', '', {closed: false, indent: 2 * stack.length}))
       break
 
       case 'thead':
-        result.push(htmlTag('tr', '', {closed: false, indent: 2 * (stack.length + 1)}))
-        stack.push(['tr', {indent: 2 * (stack.length + 1)}])
+        if (e.data) {
+          result.push(htmlTag('tr', '', {closed: false, indent: 2 * (stack.length + 1)}))
+          stack.push(['tr', {indent: 2 * (stack.length + 1)}])
 
-        e.content.split(',').forEach((h) => {
-          result.push(htmlTag('th', h, {indent: 2 * (stack.length + 1)}))
-        })
+          e.data.split(',').forEach((h) => {
+            result.push(htmlTag('th', h, {indent: 2 * (stack.length + 1)}))
+          })
 
-        result.push(closeTag('tr', {indent: 2 * (stack.length)}))
-        stack.pop()
+          result.push(closeTag('tr', {indent: 2 * (stack.length)}))
+          stack.pop()
+        } else {
+          errors.push(`Missing content for tag ${e.tag}.`)
+        }
       break
 
       case 'trow':
-        stack.push(['tr', {indent: 2 * (stack.length + 1)}])
-        result.push(htmlTag('tr', '', {closed: false, indent: 2 * stack.length}))
+        if (e.data) {
+          stack.push(['tr', {indent: 2 * (stack.length + 1)}])
+          result.push(htmlTag('tr', '', {closed: false, indent: 2 * stack.length}))
 
-        e.content.split(',').forEach((d) => {
-          result.push(htmlTag('td', d, {indent: 2 * (stack.length + 1)}))
-        })
+          e.data.split(',')
+            .filter((f) => f !== '')
+            .forEach((d) => {
+            result.push(htmlTag('td', d, {indent: 2 * (stack.length + 1)}))
+          })
 
-        result.push(closeTag('tr', {indent: 2 * (stack.length)}))
-        stack.pop()
+          result.push(closeTag('tr', {indent: 2 * (stack.length)}))
+          stack.pop()
+        } else {
+          errors.push(`Missing data for tag ${e.tag}.`)
+        }
       break
 
       default:
+      break
     }
   })
 
@@ -236,9 +256,7 @@ function htmlRenderer (data, errors) {
 
   result = renderSecondaryTags(result)
 
-  toc = renderToc(toc)
-
-  toc = htmlTag('h2', 'Table of Contents', {indent: 2}) + '\n' + toc
+  toc = renderToc(Array.from(toc))
 
   temp = result.join('\n')
 
