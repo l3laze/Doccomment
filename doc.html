@@ -82,30 +82,32 @@
 <textarea id="lines_ta_input" class="lines"></textarea>
 <textarea id="ta_input" class="editor">
 # @root What?
-# @section "Hello! Hello! HELLOOOO!!!!"
-#  @list "Something Something" - List description.
-#   @item 'Something Here' - Description of item.
-*   @item Here be GitHub - @link https://www.github.com
-*   @item @text Again - whirled#=+!@#$%^&*()-_{}[]\|:;,>&lt;.
-*   @item "Meow, meow, meow." - @image https://avatars.githubusercontent.com/u/18404758?s=16&v=4
+# @section Hello! Hello! HELLOOOO!!!!
+#  @list
+#   @item @text Description of item.
+*   @item @link https://www.github.com GitHub
+*   @item @text Hallo whirled#=+!@#$%^&*()-_{}[]\|:;,>&lt;.
+*   @item @image https://avatars.githubusercontent.com/u/18404758
+*   @item @image whoop.jpg @text whooooooop.
 #  @end
 = @end
 = EMPTY
 =
 = @separator
 =
-* @section Another Section! - @bold @italic @yourmotherfigure
-~  @text - @only_predetermined_@tag_are_parsed
+* @section Another Section!
+~  @text @unknown tags are ignored.
+! @unknown primary tags cause errors.
 ~ @end
 !
 ! @separator
 !
-# @section {Type} Section Name = 'example' - Description.
-#  @hello world
+, @section Hello
 *  @table Descriptive Title
-*   @thead - @bold 1,2,3
-*   @trow - d,e,f
-*   @trow - g,h,@text   h4i  ---     th3r3%
+*   @thead @bold 1,2,3
+*   @trow d,e,f
+*   @trow g,h, @text   h4i  ---     th3r3%
+.   @trow @image lol.gif,@link lmao.net,@text huh?
 *  @end
 ! @end
 *</textarea>
