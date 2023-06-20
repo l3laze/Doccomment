@@ -51,9 +51,11 @@ function selfTag (tag, options = {indent: 0, indentChar: ' ', separate: false}) 
 ${options.separate ? '\n' + options.indentChar.repeat(options.indent) : ''}`
 }
 
-function renderSecondaryTags (data) {
+function renderSecondaryTags (data, ops = {}) {
   const secondary = [ 'image', 'link', 'text' ]
   const re = /@(?<tag>[\w]+)(?: +)(?<data>[^\n<]+)(?<rest>[^\n]+)/g
+
+  const options = initOptions(ops)
 
   let temp, start = 0, link
 
@@ -83,11 +85,12 @@ function renderSecondaryTags (data) {
         break
 
         case 'text':
-          data[x] = `${data[x].substring(0, start)}${data[x].slice(start).split(' ')[1]}`
+          data[x] = `${data[x].substring(0, start)}${data[x].slice(start).split(' ').slice(1).join(' ')}` 
+          // data[x] = `${data[x].substring(0, start)}${temp.groups.data}`
         break
 
         case 'empty':
-          data[x] = '<br>'
+          data[x] = (' '.repeat(options.indent) + '<br>').repeat(2)
         break
       }
 
@@ -119,7 +122,7 @@ function renderToc (toc, options = {indent: 0}) {
 
   temp = htmlTag('h1', 'Table of Contents', {indent: 4}) + '\n' + temp
 
-  temp = htmlTag('section', '\n' + temp + '\n  ', {indent: 2}) + '\n'
+  temp = htmlTag('section', '\n' + temp + '\n  ', {indent: 2})
 
   return temp
 }
@@ -139,6 +142,10 @@ function htmlRenderer (data, errors) {
   errors = []
 
   data.forEach((e) => {
+    if (e.tag === 'raw' && stack[stack.length - 1] === 'RAW') {
+      result.push(e.data + '\n') 
+    }
+
     switch (e.tag) {
       case 'root':
         hasRoot = true
@@ -149,6 +156,11 @@ function htmlRenderer (data, errors) {
           '\n' +
           htmlTag('body', '', {closed: false, separate: true}),
           {closed: false, separate: true}))
+      break
+
+      case 'raw':
+        stack.push('raw')
+        result.push(`  ${e.data}`)
       break
 
       case 'section':
@@ -182,7 +194,9 @@ function htmlRenderer (data, errors) {
       case 'end':
         temp = stack.pop()
 
-        result.push(closeTag(temp[0], temp[1]))
+        if (temp !== 'raw') {
+          result.push(closeTag(temp[0], temp[1]))
+        }
       break
 
       case 'text':
@@ -202,7 +216,7 @@ function htmlRenderer (data, errors) {
       break
 
       case 'empty':
-        result.push(selfTag('br', {indent: 2 * (stack.length + 1), separate: true}))
+        result.push((selfTag('br', {indent: 2 * (stack.length + 1), separate: true}) + '\n').repeat(2))
       break
 
       case 'table':
@@ -253,6 +267,8 @@ function htmlRenderer (data, errors) {
   if(hasRoot) {
     result.push(closeTag('body'), closeTag('html', {separate: true}))
   }
+
+  console.log(result)
 
   result = renderSecondaryTags(result)
 

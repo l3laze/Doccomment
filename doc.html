@@ -82,6 +82,19 @@
 <textarea id="lines_ta_input" class="lines"></textarea>
 <textarea id="ta_input" class="editor">
 # @root What?
+#
+# @raw <style>
+# @raw . {
+# @raw   padding: 0;
+# @raw   margin: 0;
+# @raw }
+# @raw
+# @raw a {
+# @raw   color: red;
+# @raw }
+# @raw </style>
+# @end
+#
 # @section Hello! Hello! HELLOOOO!!!!
 #  @list
 #   @item @text Description of item.
@@ -96,8 +109,8 @@
 = @separator
 =
 * @section Another Section!
-~  @text @unknown tags are ignored.
-! @unknown primary tags cause errors.
+~  @text @unknown secondary tags are ignored.
+!  @unknown primary tags cause warnings and are not included in parsed data.
 ~ @end
 !
 ! @separator

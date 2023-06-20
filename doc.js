@@ -12,7 +12,7 @@ function defaultRenderer (data, errors) {
 
 async function parse (options = {}) {
   // Built with https://regexr.com/
-  const re = /@(?<tag>[\w]+)(?: +)?(?<data>[^\n]+)?/g
+  const re = /@(?<rawtag>raw) +?(?<rawdata>[^\n]+(?!@end))|@(?<tag>[\w]+)(?: +)?(?<data>[^\n]+)?/g
 
   const data = document.getElementById('ta_input').value
 
@@ -23,27 +23,53 @@ async function parse (options = {}) {
   let obj = {}
 
   if (typeof options.tags === 'undefined') {
-    options.tags = 'root|section|list|item|table|thead|image|link|trow|text|end|separator|empty'.split('|')
+    options.tags = 'root|raw|section|list|item|table|thead|image|link|trow|text|end|separator|empty'.split('|')
   }
   
   if (typeof options.renderer === 'undefined') {
     options.renderer = defaultRenderer
   }
 
+  /*
+  for (line of data) {
+    if ((found = re.exec(line)) !== null) {
+      if (typeof found.groups.tag !== 'undefined') {
+        if (options.tags.includes(found.groups.tag.trim())) {
+
+      }
+    }
+  }
+  */
+
   while ((found = re.exec(data)) !== null) {
-    if (!options.tags.includes(found.groups.tag)) {
+    obj = {}
+
+    obj.tag = (typeof found.groups.tag !== 'undefined'
+      ? found.groups.tag.trim()
+      : found.groups.rawtag.trim())
+
+    if (!options.tags.includes(obj.tag.trim())) {
       line = data.slice(0, data.indexOf(found[0].trim()))
         .split('\n').length
-      errors.push(`error on line ${line}: Unknown tag '${found.groups.tag}' in "${found[0].trim()}".`)
+      errors.push(`Warning from line ${line}: Unknown tag '${obj.tag}' in "${found[0].trim()}".`)
     } else {
       obj = {}
 
-      if (typeof found.groups.tag !== 'undefined') {
-        obj.tag = found.groups.tag.trim()
+      obj.tag = (typeof found.groups.tag !== 'undefined'
+        ? found.groups.tag.trim()
+        : found.groups.rawtag.trim())
 
-        if (typeof found.groups.data !== 'undefined') {
-          obj.data = found.groups.data.trim()
-        }
+      if (typeof found.groups.data !== 'undefined') {
+        obj.data = found.groups.data.trim()
+      }
+
+      if (typeof found.groups.rawdata !== 'undefined') {
+        obj.data = found.groups.rawdata
+      }
+
+      if (typeof found.groups.data === 'undefined' &&
+        typeof found.groups.rawdata === 'undefined') {
+          obj.data = ''
       }
 
       root.push(obj)
